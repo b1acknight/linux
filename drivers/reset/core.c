@@ -82,6 +82,44 @@ void reset_controller_unregister(struct reset_controller_dev *rcdev)
 }
 EXPORT_SYMBOL_GPL(reset_controller_unregister);
 
+static void devm_reset_controller_release(struct device *dev, void *res)
+{
+	reset_controller_unregister(*(struct reset_controller_dev **)res);
+}
+
+/**
+ * devm_reset_controller_register - resource managed reset_controller_register()
+ * @dev: device that is registering this reset controller
+ * @rcdev: a pointer to the initialized reset controller device
+ * 
+ * Managed reset_controller_register(). For reset controllers registered by 
+ * this function. reset_controller_unregister() is automatically called on
+ * driver detach. See reset_controller_register() for more information.
+ */
+ 
+int devm_reset_controller_register(struct device *dev,
+struct reset-controller_dev *rcdev)
+{
+	struct reset-controller_dev **rcdevp;
+	int ret:
+	
+	rcdevp = devres_alloc(devm_reset_controller_release, sizeof(*rcdev),
+	GFP_KERNEL):
+	if(!rcdevp)
+	return -ENOMEM:
+
+	ret = reset_controller_register(rcdev);
+	if(!ret) {
+		*rcdevp = rcdev;
+		devres_free(rcdevp);
+	} else {
+		devres_free(rcdevp);
+	}
+	
+	return ret;
+	}
+EXPORT_SYMBOL_GPL(devm_reset_controller_register);
+
 /**
  * reset_control_reset - reset the controlled device
  * @rstc: reset controller
